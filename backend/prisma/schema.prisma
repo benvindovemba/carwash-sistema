@@ -1,0 +1,369 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Criar uma migration: npm prisma migrate dev
+
+model Usario{
+
+  id String @id @default(uuid())
+  email String
+  password String
+  perfil Perfil
+  // Para que grave a Hora atual
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  funcionario Funcionario @relation(fields: [funcionario_id], references: [id])
+
+  //Aqui mapeamos como queremos que a nossa tabela seja gravada no nosso banco de dados
+  @@map("usuarios")
+  funcionario_id String
+}
+
+enum Perfil{
+  Admin
+  Funcionario
+  Gerente
+}
+
+model Categoria{
+
+  id String @id @default(uuid())
+  nome String @unique
+
+  // Para que grave a Hora atual
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  //Aqui mapeamos como queremos que a nossa tabela seja gravada no nosso banco de dados
+  @@map("categorias")
+
+  produtos Produto[]
+}
+
+model Funcao{
+  id String @id @default(uuid())
+  nome String @unique
+
+  // Para que grave a Hora atual
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  //Aqui mapeamos como queremos que a nossa tabela seja gravada no nosso banco de dados
+  @@map("funcoes")
+
+  Funcionario Funcionario[]
+}
+
+model Seccao{
+  id String @id @default(uuid())
+  nome String @unique
+
+  // Para que grave a Hora atual
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  //Aqui mapeamos como queremos que a nossa tabela seja gravada no nosso banco de dados
+  @@map("seccoes")
+  Pedido Pedido[]
+  Produto Produto[]
+  Funcionario Funcionario[]
+}
+
+model Produto{
+
+  id String @id @default(uuid())
+  nome String @unique
+  preco Float
+  descricao String
+  image String
+
+  // Para que grave a Hora atual
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  // Relação
+  categoria Categoria @relation(fields: [categoria_id], references: [id])
+  seccao Seccao @relation(fields: [seccao_id], references: [id])
+
+  @@map("produtos")
+
+  categoria_id String
+  seccao_id String
+  items Item[]
+  Stock Stock[]
+}
+
+model Pedido{
+
+  id String @id @default(uuid())
+  selecionar Selecionar
+  status Boolean @default(false)
+  draft  Boolean @default(true)
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  seccao Seccao @relation(fields: [seccao_id], references: [id])
+  funcionario Funcionario @relation(fields: [funcionario_id], references: [id])
+  funcionario_id String
+  seccao_id String
+
+  @@map("pedidos")
+  items Item[]
+}
+
+enum Selecionar{
+  Rampa1 @map("Rampa 1")
+  Rampa2 @map("Rampa 2")
+  Rampa3 @map("Rampa 3")
+  Rampa4 @map("Rampa 4")
+  OutrosServicos @map("Vendas Loja")
+}
+
+model Item{
+
+  id String @id @default(uuid())
+  amount Int
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  // Relação
+  pedido Pedido @relation(fields: [pedido_id], references: [id])
+  produtos Produto @relation(fields: [produto_id], references: [id])
+  
+  @@map("items")
+  pedido_id String
+  produto_id String
+
+}
+
+model Funcionario{
+
+  id String @id @default(uuid())
+  nome String
+  apelido String
+  email String @unique   // Email único
+  nif String @unique    // NIF único
+  telefone String
+  dataNascimento DateTime
+  dataContratacao DateTime
+  dataDemissao DateTime?
+  morada String
+  natural Naturalidade @default(Luanda)
+  provincia Provincia @default(Luanda)
+  sexo Sexo @default(Masculino)
+  estadoCivil EstadoCivil @default(Solteiro)
+  salarioBase Float
+  foto String? // Foto (opcional)
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  funcao Funcao @relation(fields: [funcao_id], references: [id])
+  seccao Seccao @relation(fields: [seccao_id], references: [id])
+
+  @@map("funcionarios")
+  funcao_id String
+  seccao_id String
+
+  Pedido Pedido[]
+  Payroll Payroll[]
+  Assiduidade Assiduidade[]
+  RelatorioVendas RelatorioVendas[]
+  Usario Usario[]
+  Presenca Presenca[]
+  Ausencia Ausencia[]
+}
+
+enum Naturalidade{
+  Caxito
+  Benguela
+  Cuíto
+  Cabinda
+  Menongue 
+  Ndalatando  
+  Sumbe     
+  Ondijiva
+  Huambo
+  Lubango
+  Luanda
+  Dundo    
+  Saurimo     
+  Malanje
+  Luena
+  Moçâmedes
+  Uíge
+  Zaire @map("Mbanza Congo")
+}
+
+enum Provincia{
+  Bengo
+  Benguela
+  Bié
+  Cabinda
+  CuandoCubango @map("Cuando Cubango")
+  CuanzaNorte   @map("Cuanza Norte")
+  CuanzaSul     @map("Cuanza Sul")
+  Cunene
+  Huambo
+  Huila
+  Luanda
+  LundaNorte    @map("Lunda Norte")
+  LundaSul      @map("Lunda Sul")
+  Malanje
+  Moxico
+  Namibe
+  Uíge
+  Zaire
+}
+
+enum Sexo{
+  Masculino
+  Feminino
+}
+
+enum EstadoCivil{
+  Casado
+  Divorciado
+  Solteiro
+  Viúvo
+}
+
+model Payroll{
+  id String @id @default(uuid())
+  mes Int
+  ano Int
+  salarioBase Float
+  descontos Float
+  valorLiquido Float
+  bonusAssiduidade Float // Bônus de assiduidade
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  asseduidade_id String
+  funcionario_id String
+  
+  assiduidade Assiduidade @relation(fields: [asseduidade_id], references: [id])
+
+  funcionario Funcionario @relation(fields: [funcionario_id], references: [id])
+  
+
+  @@map("payrolls")
+}
+
+model Presenca{
+  id String @id @default(uuid())
+  estado Estado
+  data DateTime
+  justificativo String? // Justificativa da ausência (saúde, familiar, etc.)
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  funcionario_id String
+
+  funcionario Funcionario @relation(fields: [funcionario_id], references: [id])
+  
+
+  @@map("presencas")
+
+}
+
+enum Estado{
+  Presente
+  Faltou
+}
+
+model Ausencia{
+  id String @id @default(uuid())
+  dataInicio DateTime
+  dataFim DateTime
+  estado Estado?
+  justificativo String? // Justificativa da ausência (saúde, familiar, etc.)
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  funcionario_id String
+
+  funcionario Funcionario @relation(fields: [funcionario_id], references: [id])
+
+  @@map("ausencias")
+}
+
+model Assiduidade{
+  id String @id @default(uuid())
+  dia Int?
+  mes Int
+  ano Int
+  totalPresencas Int               // Total de dias presentes no mês
+  totalFaltas Int                 //  Total de faltas no mês
+  faltasJustificadas Int         //   Total de faltas não justificadas
+  faltasNaoJustificadas Int      //   Total de faltas não justificadas
+  classificacao Classificacao   //    "assíduo" ou "não assíduo"
+  bonusAssiduidade  Float      //     Bônus de assiduidade
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  funcionario_id String
+
+  funcionario Funcionario @relation(fields: [funcionario_id], references: [id])
+
+  @@unique([funcionario_id, mes, ano], name: "funcionario_mes_ano") // Define a chave unica 
+  @@map("assiduidades")
+  
+  Payroll Payroll[]
+}
+
+enum Classificacao{
+  Assíduo
+  NãoAssíduo @map("Não assíduo")
+}
+
+model RelatorioVendas{
+  id String @id @default(uuid())
+  periodo Periodo
+  vendaTotal String
+  lucroTotal String
+  funcionarioDestaque Funcionario[]
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  @@map("relatoriosvendas")
+  
+}
+
+enum Periodo{
+  Diário
+  Semanal
+  Mensal
+  Trimestral
+  Semestral
+  Anual
+}
+
+model Stock{
+  id String @id @default(uuid())
+  quantidade Int              // Quantidade de itens disponíveis em estoque
+  pontoAbastecimento Int     // Ponto de reabastecimento (quantidade mínima para reabastecer)
+  data_entrada DateTime     // Data de entrada do produto no estoque
+  data_saida DateTime?      // Data de saída (quando o produto for retirado ou vendido)
+  created_at DateTime? @default(now())
+  update_at  DateTime? @updatedAt
+
+  produto Produto @relation(fields: [produto_id], references: [id])
+
+  @@map("stocks")  // Nome da tabela no banco de dados
+  produto_id String
+  
+}
+
